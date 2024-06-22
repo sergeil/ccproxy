@@ -1,0 +1,38 @@
+name: ci
+on: [push]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pipenv
+      - name: Python version
+        run: python --version
+      - name: Installing system dependencies
+        run: pip install pipenv
+      - name: Installing project dependencies
+        run: pipenv sync -d
+      - name: Linting
+        run: pipenv run make lint
+      - name: Mypy
+        run: pipenv run make mypy
+      - name: Booting dockerized DynamoDB
+        run: make local-db
+      - name: Waiting for DynamoDB to be ready
+        run: |
+          while ! curl -s http://localhost:8000 > /dev/null; do
+            echo "."
+            sleep 1
+          done
+          sleep 1
+        shell: bash
+      - name: Testing 🤘
+        run: |
+          cp .env.dist .env
+          pipenv run make test

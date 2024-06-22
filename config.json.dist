@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "open_garage_door": [
+      "Roger that, opening"
+    ]
+  },
+  "actions": {
+    "open_garage_door": "Tasks\\Garage door"
+  }
+}

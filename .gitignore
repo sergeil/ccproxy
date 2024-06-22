@@ -1,0 +1,15 @@
+.vscode
+.DS_Store
+deployment/artifacts/*
+deployment/config.tf
+deployment/tfstate/config.tf
+terraform.tfstate
+terraform.tfstate.backup
+.terraform
+docker/volumes
+config.json
+.env
+.env.prod
+.env.dev
+protocol
+TODO
