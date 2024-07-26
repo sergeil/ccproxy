@@ -1,4 +1,3 @@
-from typing import Any
 import pytest
 from ccproxy.handlers.login import login_handler
 from ccproxy.handlers import utils as handler_utils

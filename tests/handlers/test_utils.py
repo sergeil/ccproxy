@@ -107,7 +107,7 @@ def test_extract_body_errors(event: dict[str, Any], expected_error_type: str) ->
     thrown_error = None
 
     try:
-        result = handlers_utils.extract_body(event)
+        handlers_utils.extract_body(event)
     except handlers_utils.LambdaHttpError as e:
         thrown_error = e
 
