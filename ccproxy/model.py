@@ -9,7 +9,6 @@ ACCOUNT_ID_FIELD = Field(min_length=1, max_length=config.ACCOUNT_ID_LENGTH)
 class CredentialsEnvelope(BaseModel):
     username: str = Field(min_length=1)
     password: str = Field(min_length=1)
-
     host: AnyHttpUrl
 
 class Config(BaseModel):

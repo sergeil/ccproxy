@@ -96,4 +96,4 @@ process_action_url=$(terraform output -raw process_action_url)
 echo "# Good stuff, the infra has been provisioned. Here are your URLs: "
 echo "# * login_url: ${login_url}"
 echo "# * process_action_url: ${process_action_url}"
-echo "# Now you can use ./deployment/bin/login.sh script to create an account on ccproxy."
+echo "# Now you can run 'make create-account' to create an account on ccproxy."

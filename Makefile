@@ -40,3 +40,6 @@ generate-db-key:
 validate-config: # e.g. make validate-config file=config.json
 	@cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 	@PYTHONPATH="$PYTHONPATH:${pwd}" python ccproxy/cli.py validate-config $(file)
+
+create-account:
+	@./deployment/bin/login.sh

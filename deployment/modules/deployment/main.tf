@@ -74,6 +74,8 @@ resource "aws_lambda_function" "process_action" {
   }
 }
 
+###
+
 resource "aws_lambda_function_url" "process_action" {
   function_name      = aws_lambda_function.process_action.function_name
   authorization_type = "NONE"
@@ -107,14 +109,9 @@ resource "aws_lambda_function_url" "login" {
 
 ### 
 
-resource "aws_lambda_function_url" "process_action" {
-  function_name      = aws_lambda_function.process_action.function_name
-  authorization_type = "NONE"
-}
-
 resource "aws_lambda_function" "update_config" {
-  function_name = "${var.aws_resource_prefix}login"
-  handler       = "ccproxy.handlers.login.update_config"
+  function_name = "${var.aws_resource_prefix}update_config"
+  handler       = "ccproxy.handlers.update_config"
   role          = aws_iam_role.lambda.arn
   runtime       = var.lambda_runtime
   memory_size   = 256
