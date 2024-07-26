@@ -17,13 +17,11 @@ def process_action_handler(event: dict[str, Any], context: dict[str, Any]) -> di
             'body': 'Brewing lambda'
         }
 
-    q = event['queryStringParameters']
-
     _validate_request(event)
+    q = event['queryStringParameters']
+    action = q['action']
 
     account_table = container.create_account_table()
-
-    action = q['action']
 
     account_id_val = event['headers'][_ACCOUNT_HEADER_NAME][0:config.ACCOUNT_ID_LENGTH]
     account = account_table.find(account_id_val)
@@ -44,7 +42,6 @@ def process_action_handler(event: dict[str, Any], context: dict[str, Any]) -> di
         'body': message
     }
 
-# TODO refactor to start throwing exceptions instead
 def _validate_request(event: dict[str, Any]) -> Optional[dict[str, Any]]:
     if 'action' not in event['queryStringParameters']:
         raise handler_utils.RequestValidationError(
