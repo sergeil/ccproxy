@@ -5,6 +5,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from cryptography.fernet import Fernet
 from mypy_boto3_dynamodb import DynamoDBServiceResource
 from ccproxy import model, network
+import json
 
 
 class Encrypter:
@@ -31,6 +32,8 @@ class AccountTable:
         encrypted_password = self._encrypter.encrypt(account.password)
         encrypted_cookie = self._encrypter.encrypt(account.cookie)
 
+        # TODO consider introducing a fn that would prepare an arg for put_item()
+
         if account.id is None:
             id = str(uuid.uuid4())[:config.ACCOUNT_ID_LENGTH]
 
@@ -40,7 +43,8 @@ class AccountTable:
                     'username': account.username,
                     'password': encrypted_password,
                     'host': account.host,
-                    'cookie': encrypted_cookie
+                    'cookie': encrypted_cookie,
+                    'config': json.loads(account.config.json()) if account.config is not None else {}
                 }
             )
 
@@ -50,12 +54,13 @@ class AccountTable:
                 Key={
                     'id': account.id
                 },
-                UpdateExpression='SET username = :username, password = :password, host = :host, cookie = :cookie',
+                UpdateExpression='SET username = :username, password = :password, host = :host, cookie = :cookie, config = :config',
                 ExpressionAttributeValues={
                     ':username': account.username,
                     ':password': encrypted_password,
                     ':host': account.host,
-                    ':cookie': encrypted_cookie
+                    ':cookie': encrypted_cookie,
+                    ':config': json.loads(account.config.json()) if account.config is not None else {}
                 }
             )
 
@@ -102,20 +107,48 @@ class AccountTable:
         return self._hydrate(row['Item']) if row is not None and 'Item' in row else None
 
 
-def authenticate(credentials: model.CredentialsEnvelope, account_table: AccountTable) -> model.Account:
-    cookie = network.authenticate(credentials)
+def _validate_account_changeset(transient_account: model.Account, db_account: model.Account) -> bool:
+    is_host_changed = db_account.host != transient_account.host
+    is_username_changed = db_account.username != transient_account.username
+    if is_host_changed or is_username_changed:
+        raise RuntimeError('It is not allowed to change "username", "host" values for existing accounts.')
 
-    account = account_table.find_by_host_and_username(
-        credentials.host,
-        credentials.username
+def authenticate2(transient_account: model.Account, tbl: AccountTable) -> model.Account:
+    cookie = network.authenticate(transient_account)
+
+    if transient_account.id is None:
+        account = model.Account(
+            username=transient_account.username,
+            password=transient_account.password,
+            host=transient_account.host
+        )
+    else:
+        account = tbl.find(transient_account.id)
+
+    _validate_account_changeset(transient_account, account)
+
+    account.cookie = cookie
+    account.config = transient_account.config
+    account.password = transient_account.password
+
+    return tbl.save(account)
+
+def authenticate(acc_arg: model.Account, tbl: AccountTable) -> model.Account:
+    cookie = network.authenticate(acc_arg)
+
+    account = tbl.find(acc_arg.id) if acc_arg.id is not None else tbl.find_by_host_and_username(
+        acc_arg.host,
+        acc_arg.username
     )
+
     if account is None:
         account = model.Account(
-            username=credentials.username,
-            password=credentials.password,
-            host=credentials.host
+            username=acc_arg.username,
+            password=acc_arg.password,
+            host=acc_arg.host
         )
 
     account.cookie = cookie
+    account.config = acc_arg.config
 
-    return account_table.save(account)
+    return tbl.save(account)

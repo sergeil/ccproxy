@@ -1,9 +1,17 @@
 from unittest.mock import Mock, patch
-from ccproxy import api
+from ccproxy import api, model
 from typing import Any
 
 
 class TestRemoteDeviceController:
+    def _create_account(self, config: dict[str, Any]) -> model.Account:
+        return model.Account(
+            username='foo-username',
+            password='foo-password',
+            host='https://example.org',
+            config=model.Config(**config)
+        )
+
     def test_config_validation_missing_messages(self) -> None:
         config = {
             "messages": {
@@ -13,11 +21,10 @@ class TestRemoteDeviceController:
                 "bar_action": "bar_action_path"
             }
         }
-        dummy_api_client = Mock()
 
         error = None
         try:
-            api.RemoteDeviceController(config, dummy_api_client)
+            api.RemoteDeviceController(self._create_account(config))
         except api.RemoteDeviceController.InvalidConfigError as e:
             error = e
 
@@ -36,11 +43,10 @@ class TestRemoteDeviceController:
                 "bar_action": ""
             }
         }
-        dummy_api_client = Mock()
 
         error = None
         try:
-            api.RemoteDeviceController(config, dummy_api_client)
+            api.RemoteDeviceController(self._create_account(config))
         except api.RemoteDeviceController.InvalidConfigError as e:
             error = e
 
@@ -59,11 +65,10 @@ class TestRemoteDeviceController:
                 "bar_action": "bar path"
             }
         }
-        dummy_api_client = Mock()
 
         error = None
         try:
-            api.RemoteDeviceController(config, dummy_api_client)
+            api.RemoteDeviceController(self._create_account(config))
         except api.RemoteDeviceController.InvalidConfigError as e:
             error = e
 
@@ -82,14 +87,13 @@ class TestRemoteDeviceController:
             }
         }
 
-        account = Mock()
-        account.host = 'https://example.org'
+        account = self._create_account(config)
 
         response_mock = Mock()
 
         do_authenticated_request_mock.return_value = response_mock
 
-        dc = api.RemoteDeviceController(config, account)
+        dc = api.RemoteDeviceController(account)
 
         message = dc.toggle('bla_action')
 
@@ -117,8 +121,7 @@ class TestRemoteDeviceController:
                 "bar_action": "bar_action_path"
             }
         }
-        dummy_api_client = Mock()
-        dc = api.RemoteDeviceController(config, dummy_api_client)
+        dc = api.RemoteDeviceController(self._create_account(config))
 
         actions = dc.get_supported_actions()
         assert actions == ('bla_action', 'bar_action',)

@@ -25,6 +25,8 @@ resource "aws_dynamodb_table" "auth" {
   }
 }
 
+###
+
 resource "aws_iam_policy" "lambda" {
   name_prefix = "${var.aws_resource_prefix}lambda-"
   policy = templatefile("${path.module}/templates/lambda_policy.tpl", {
@@ -48,14 +50,14 @@ resource "aws_lambda_layer_version" "this" {
   source_code_hash = filebase64sha256(var.layer_zip_path)
   layer_name       = "${var.aws_resource_prefix}py"
 
-  compatible_runtimes = ["python3.10"]
+  compatible_runtimes = [var.lambda_runtime]
 }
 
 resource "aws_lambda_function" "process_action" {
   function_name = "${var.aws_resource_prefix}main"
   handler       = "ccproxy.handlers.process_action.process_action_handler"
   role          = aws_iam_role.lambda.arn
-  runtime       = "python3.10"
+  runtime       = var.lambda_runtime
   memory_size   = 256
   timeout       = 10
 
@@ -81,7 +83,7 @@ resource "aws_lambda_function" "login" {
   function_name = "${var.aws_resource_prefix}login"
   handler       = "ccproxy.handlers.login.login_handler"
   role          = aws_iam_role.lambda.arn
-  runtime       = "python3.10"
+  runtime       = var.lambda_runtime
   memory_size   = 256
   timeout       = 10
 
@@ -100,6 +102,39 @@ resource "aws_lambda_function" "login" {
 
 resource "aws_lambda_function_url" "login" {
   function_name      = aws_lambda_function.login.function_name
+  authorization_type = "NONE"
+}
+
+### 
+
+resource "aws_lambda_function_url" "process_action" {
+  function_name      = aws_lambda_function.process_action.function_name
+  authorization_type = "NONE"
+}
+
+resource "aws_lambda_function" "update_config" {
+  function_name = "${var.aws_resource_prefix}login"
+  handler       = "ccproxy.handlers.login.update_config"
+  role          = aws_iam_role.lambda.arn
+  runtime       = var.lambda_runtime
+  memory_size   = 256
+  timeout       = 10
+
+  filename         = var.package_zip_path
+  source_code_hash = filebase64sha256(var.package_zip_path)
+  description      = "Config update endpoint"
+
+  layers = [aws_lambda_layer_version.this.arn]
+
+  environment {
+    variables = {
+      ACCOUNTS_TABLE = aws_dynamodb_table.auth.name
+    }
+  }
+}
+
+resource "aws_lambda_function_url" "update_config" {
+  function_name      = aws_lambda_function.update_config.function_name
   authorization_type = "NONE"
 }
 

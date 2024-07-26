@@ -1,6 +1,5 @@
 from ccproxy import api, config, model, main
 from typing import Optional
-import json
 import boto3
 from mypy_boto3_dynamodb import DynamoDBServiceResource, DynamoDBClient
 
@@ -31,7 +30,4 @@ def create_account_table() -> main.AccountTable:
 
 
 def create_remote_device_controller(account: model.Account) -> api.RemoteDeviceController:
-    with open(config.CONFIG_FILE) as reader:
-        config_contents = json.loads(reader.read())
-
-        return api.RemoteDeviceController(config_contents, account)
+    return api.RemoteDeviceController(account)
