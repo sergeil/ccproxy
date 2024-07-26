@@ -19,9 +19,7 @@ def process_action_handler(event: dict[str, Any], context: dict[str, Any]) -> di
 
     q = event['queryStringParameters']
 
-    validation_result = _validate_request(event)
-    if validation_result is not None:
-        return validation_result
+    _validate_request(event)
 
     account_table = container.create_account_table()
 
@@ -30,40 +28,37 @@ def process_action_handler(event: dict[str, Any], context: dict[str, Any]) -> di
     account_id_val = event['headers'][_ACCOUNT_HEADER_NAME][0:config.ACCOUNT_ID_LENGTH]
     account = account_table.find(account_id_val)
     if account is None:
-        return {
-            'statusCode': 400,
-            'body': f'Unable to find account "{account_id_val}".'
-        }
+        raise handler_utils.LambdaHttpError(
+            f'Unable to find account "{account_id_val}".', 400
+        )
 
     try:
         message = do_api_call(account, account_table, action)
     except api.RemoteDeviceController.UnknownActionError:
-        return {
-            'statusCode': 400,
-            'body': f'Unkown action "{action[0:16]}" given.',
-            '_errorType': 'unknown_action'
-        }
+        raise handler_utils.LambdaHttpError(
+            f'Unkown action "{action[0:16]}" given.', 400, 'unknown_action'
+        )
 
     return {
         'statusCode': 200,
         'body': message
     }
 
-
+# TODO refactor to start throwing exceptions instead
 def _validate_request(event: dict[str, Any]) -> Optional[dict[str, Any]]:
     if 'action' not in event['queryStringParameters']:
-        return {
-            'statusCode': 400,
-            'body': '"action" is not specified. For example, you can append this to URL: ?action=open_garage',
-            '_errorType': 'action_not_specified'
-        }
+        raise handler_utils.RequestValidationError(
+            '"action" is not specified. For example, you can append this to URL: ?action=open_garage',
+            400,
+            'action_not_specified'
+        )
 
     if _ACCOUNT_HEADER_NAME not in event['headers']:
-        return {
-            'statusCode': 400,
-            'body': f'Account not specified, use "{_ACCOUNT_HEADER_NAME}" header for that.',
-            '_errorType': 'account_not_specified'
-        }
+        raise handler_utils.RequestValidationError(
+            f'Account not specified, use "{_ACCOUNT_HEADER_NAME}" header for that.',
+            400,
+            'account_not_specified'
+        )
 
     return None
 

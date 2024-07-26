@@ -42,7 +42,7 @@ def test_authenticate_real() -> None:
 
 
 @patch('ccproxy.network.authenticate')
-def test_authenticate2_new_account_happy_path(mock_network_authenticate: Mock) -> None:
+def test_authenticate_new_account_happy_path(mock_network_authenticate: Mock) -> None:
     acc_from_db = {
         'id': 1234
     }
@@ -63,7 +63,7 @@ def test_authenticate2_new_account_happy_path(mock_network_authenticate: Mock) -
 
     mock_network_authenticate.return_value = cookie
 
-    auth_acc = main.authenticate2(payload, dummy_account_table)
+    auth_acc = main.authenticate(payload, dummy_account_table)
 
     assert auth_acc is not None
     assert auth_acc == acc_from_db
@@ -77,7 +77,7 @@ def test_authenticate2_new_account_happy_path(mock_network_authenticate: Mock) -
     assert auth_acc['id'] == acc_from_db['id'] # type: ignore[index]
 
 @patch('ccproxy.network.authenticate')
-def test_authenticate2_existing_account(mock_network_authenticate: Mock) -> None:
+def test_authenticate_existing_account(mock_network_authenticate: Mock) -> None:
     acc_from_db = model.Account(
         id='foo-id',
         username='foo-username',
@@ -103,7 +103,7 @@ def test_authenticate2_existing_account(mock_network_authenticate: Mock) -> None
 
     mock_network_authenticate.return_value = cookie
 
-    auth_acc = main.authenticate2(payload, dummy_account_table)
+    auth_acc = main.authenticate(payload, dummy_account_table)
     assert auth_acc is acc_from_db
 
     dummy_account_table.save.assert_called_once()
@@ -113,52 +113,6 @@ def test_authenticate2_existing_account(mock_network_authenticate: Mock) -> None
     assert save_method_account.config is payload.config
     assert save_method_account.password is payload.password
     assert auth_acc.id == acc_from_db.id # type: ignore[index]
-
-# TODO remove
-# # TODO think, this table uses real DB. Do we really need that?
-# @patch('ccproxy.network.do_request')
-# def test_authenticate_existing_account(mock_do_request: Mock) -> None:
-#     tutils.create_accounts_table_if_not_exists()
-
-#     username = f'foo-un{uuid.uuid4()}'
-#     host = f'http://foo-hst{uuid.uuid4()}'
-
-#     payload = model.Account(
-#         host=host,
-#         username=username,
-#         password='1234',
-#     )
-#     provided_account = model.Account(
-#         username=payload.username,
-#         password=payload.password,
-#         host=payload.host,
-#         cookie='old-cookie'
-#     )
-
-#     account_table = container.create_account_table()
-#     provided_account = account_table.save(provided_account)  # TODO use table.put_item instead
-
-#     dummy_account_table = account_table
-
-#     new_cookie = 'Token=new-cookie'
-
-#     dummy_response = Mock()
-#     dummy_response.status_code = 200
-#     dummy_response.headers = {
-#         'Set-Cookie': f'{new_cookie}; HttpOnly'
-#     }
-#     dummy_response.json.return_value = {
-#         'Status': 'OK'
-#     }
-
-#     mock_do_request.return_value = dummy_response
-
-#     returned_account = main.authenticate(payload, dummy_account_table)
-
-#     assert returned_account.cookie is not None
-#     assert returned_account.cookie == new_cookie
-#     assert returned_account.id == provided_account.id
-
 
 def create_pe_mock() -> Mock:
     def encrypt(input: str) -> str:

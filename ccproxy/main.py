@@ -113,7 +113,7 @@ def _validate_account_changeset(transient_account: model.Account, db_account: mo
     if is_host_changed or is_username_changed:
         raise RuntimeError('It is not allowed to change "username", "host" values for existing accounts.')
 
-def authenticate2(transient_account: model.Account, tbl: AccountTable) -> model.Account:
+def authenticate(transient_account: model.Account, tbl: AccountTable) -> model.Account:
     cookie = network.authenticate(transient_account)
 
     if transient_account.id is None:
@@ -133,22 +133,22 @@ def authenticate2(transient_account: model.Account, tbl: AccountTable) -> model.
 
     return tbl.save(account)
 
-def authenticate(acc_arg: model.Account, tbl: AccountTable) -> model.Account:
-    cookie = network.authenticate(acc_arg)
+# def authenticate(acc_arg: model.Account, tbl: AccountTable) -> model.Account:
+#     cookie = network.authenticate(acc_arg)
 
-    account = tbl.find(acc_arg.id) if acc_arg.id is not None else tbl.find_by_host_and_username(
-        acc_arg.host,
-        acc_arg.username
-    )
+#     account = tbl.find(acc_arg.id) if acc_arg.id is not None else tbl.find_by_host_and_username(
+#         acc_arg.host,
+#         acc_arg.username
+#     )
 
-    if account is None:
-        account = model.Account(
-            username=acc_arg.username,
-            password=acc_arg.password,
-            host=acc_arg.host
-        )
+#     if account is None:
+#         account = model.Account(
+#             username=acc_arg.username,
+#             password=acc_arg.password,
+#             host=acc_arg.host
+#         )
 
-    account.cookie = cookie
-    account.config = acc_arg.config
+#     account.cookie = cookie
+#     account.config = acc_arg.config
 
-    return tbl.save(account)
+#     return tbl.save(account)

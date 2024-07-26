@@ -10,6 +10,9 @@ class LambdaHttpError(RuntimeError):
         self.error_type = error_type
         super().__init__(message)
 
+class RequestValidationError(LambdaHttpError):
+    pass
+
 def extract_body(event: dict[str, Any]) -> dict[str, Any]:
     if 'body' not in event:
         raise LambdaHttpError(
