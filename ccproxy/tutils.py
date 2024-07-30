@@ -1,4 +1,4 @@
-from ccproxy import config, container
+from ccproxy import config, container, model
 
 
 def create_accounts_table_if_not_exists() -> bool:
@@ -45,3 +45,10 @@ def create_accounts_table_if_not_exists() -> bool:
         return True
 
     return False
+
+def create_account_device() -> model.Device:
+    return model.Device(
+        device_name='foo-dn',
+        platform='foo-plt',
+        push_token='foo-pt'
+    )

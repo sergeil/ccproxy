@@ -41,17 +41,17 @@ def do_authenticated_request(account: model.Account, url: str, method: str, json
     return do_request(url, method, json, headers)
 
 
-def authenticate(credentials: model.CredentialsEnvelope) -> str:
+def authenticate(account: model.Account) -> str:
     payload = {
-        'UserName': credentials.username,
-        'Password': credentials.password,
-        'DeviceName': config.DEVICE_NAME,
-        'OS': 'iOS',
-        'PushToken': config.PUSH_TOKEN,
+        'UserName': account.username,
+        'Password': account.password,
+        'DeviceName': account.device.device_name,
+        'OS': account.device.platform,
+        'PushToken': account.device.push_token,
         'RememberMe': False
     }
 
-    response = do_request(f'{credentials.host}/Login', 'POST', payload)
+    response = do_request(f'{account.host}/Login', 'POST', payload)
     _validate_auth_reponse(response)
 
     raw_cookie = response.headers['Set-Cookie'].split(';')

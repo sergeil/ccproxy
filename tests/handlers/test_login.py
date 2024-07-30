@@ -7,8 +7,8 @@ import json
 
 
 login_payload = {
-    'username': 'un', 
-    'password': 'pwd', 
+    'username': 'un',
+    'password': 'pwd',
     'host': 'https://hst',
     'device': {
         'device_name': 'foo-device',

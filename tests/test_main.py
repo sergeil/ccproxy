@@ -59,11 +59,7 @@ def test_authenticate_new_account_happy_path(mock_network_authenticate: Mock) ->
         config=model.Config(
             messages ={'foo_action': ['foo_msg1', 'foo_msg2']}
         ),
-        device=model.Device(
-            device_name='dn', 
-            platform='iOS', 
-            push_token='pt'
-        )
+        device=tutils.create_account_device()
     )
 
     cookie = 'Token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJTZXNzaW9uSUQiOiI5YTFkOTM1Ny03NmNhLTQzZGQtYTgzOS0xYjk2ZTNkNzAzZmYifQ.qxtE7q5cZREwmc_qb0718i-VKwUnlZ9-3sDxj7EvG2s'
@@ -86,8 +82,8 @@ def test_authenticate_new_account_happy_path(mock_network_authenticate: Mock) ->
 @patch('ccproxy.network.authenticate')
 def test_authenticate_existing_account(mock_network_authenticate: Mock) -> None:
     device_def = {
-        'device_name': 'dn', 
-        'platform': 'iOS', 
+        'device_name': 'dn',
+        'platform': 'iOS',
         'push_token': 'pt'
     }
 
@@ -153,13 +149,6 @@ class TestAccountTable:
             messages=acc_config_messages,
             actions=acc_config_actions
         )
-    
-    def _create_device(self) -> model.Device:
-        return model.Device(
-            device_name='foo-dn',
-            platform='foo-pl',
-            push_token='foo-pt'
-        )
 
     def test_save(self) -> None:
         tutils.create_accounts_table_if_not_exists()
@@ -169,7 +158,7 @@ class TestAccountTable:
         raw_table = dynamodb.Table(config.ACCOUNTS_TABLE)
 
         account_config = self._create_config()
-        device = self._create_device()
+        device = tutils.create_account_device()
 
         acc = model.Account(
             username='un',
