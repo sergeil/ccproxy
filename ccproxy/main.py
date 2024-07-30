@@ -44,7 +44,8 @@ class AccountTable:
                     'password': encrypted_password,
                     'host': account.host,
                     'cookie': encrypted_cookie,
-                    'config': json.loads(account.config.json()) if account.config is not None else {}
+                    'config': json.loads(account.config.json()) if account.config is not None else {},
+                    'device': json.loads(account.device.json())
                 }
             )
 
@@ -54,13 +55,14 @@ class AccountTable:
                 Key={
                     'id': account.id
                 },
-                UpdateExpression='SET username = :username, password = :password, host = :host, cookie = :cookie, config = :config',
+                UpdateExpression='SET username = :username, password = :password, host = :host, cookie = :cookie, config = :config, device = :device',
                 ExpressionAttributeValues={
                     ':username': account.username,
                     ':password': encrypted_password,
                     ':host': account.host,
                     ':cookie': encrypted_cookie,
-                    ':config': json.loads(account.config.json()) if account.config is not None else {}
+                    ':config': json.loads(account.config.json()) if account.config is not None else {},
+                    ':device': json.loads(account.device.json())
                 }
             )
 
@@ -120,7 +122,8 @@ def authenticate(transient_account: model.Account, tbl: AccountTable) -> model.A
         account = model.Account(
             username=transient_account.username,
             password=transient_account.password,
-            host=transient_account.host
+            host=transient_account.host,
+            device=transient_account.device
         )
     else:
         account = tbl.find(transient_account.id)
@@ -129,6 +132,7 @@ def authenticate(transient_account: model.Account, tbl: AccountTable) -> model.A
 
     account.cookie = cookie
     account.config = transient_account.config
+    account.device = transient_account.device
     account.password = transient_account.password
 
     return tbl.save(account)

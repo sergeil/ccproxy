@@ -11,7 +11,7 @@ def login_handler(event: dict[str, Any], context: dict[str, Any]) -> dict[str, A
 
     credentials = model.Account.parse_obj(handler_utils.extract_body(event))
     try:
-        account = main.authenticate(credentials, account_table)
+        authenticated_account = main.authenticate(credentials, account_table)
     except network.AuthContractError as e:
         logger.warning(
             f'Login error for user "{credentials.username}": {str(e)}'
@@ -25,5 +25,5 @@ def login_handler(event: dict[str, Any], context: dict[str, Any]) -> dict[str, A
         'statusCode': 200,
         # TODO consider returning the whole Account (make sure though
         # that we intentionally select which fields to return, not everything)
-        'body': account.id
+        'body': authenticated_account.id
     }

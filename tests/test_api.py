@@ -9,17 +9,22 @@ class TestRemoteDeviceController:
             username='foo-username',
             password='foo-password',
             host='https://example.org',
-            config=model.Config(**config)
+            config=model.Config(**config),
+            device=model.Device(
+                device_name='foo-dn',
+                platform='foo-platform',
+                push_token='foo-pt'
+            )
         )
 
     @patch('ccproxy.network.do_authenticated_request')
     def test_toggle(self, do_authenticated_request_mock: Mock) -> None:
         config: dict[str, Any] = {
-            "messages": {
-                "bla_action": ["foo", "bar"]
+            'messages': {
+                'bla_action': ['foo', 'bar']
             },
-            "actions": {
-                "bla_action": "bla_action_path"
+            'actions': {
+                'bla_action': 'bla_action_path'
             }
         }
 
@@ -48,13 +53,13 @@ class TestRemoteDeviceController:
 
     def test_get_supported_actions(self) -> None:
         config = {
-            "messages": {
-                "bla_action": ["foo", "bar"],
-                "bar_action": ["fooz"]
+            'messages': {
+                'bla_action': ['foo', 'bar'],
+                'bar_action': ['fooz']
             },
-            "actions": {
-                "bla_action": "bla_action_path",
-                "bar_action": "bar_action_path"
+            'actions': {
+                'bla_action': 'bla_action_path',
+                'bar_action': 'bar_action_path'
             }
         }
         dc = api.RemoteDeviceController(self._create_account(config))

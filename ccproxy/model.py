@@ -49,9 +49,16 @@ class Config(BaseModel):
 
         return values
 
+class Device(BaseModel):
+    device_name: str = Field(min_length=1)
+    platform: str = Field(min_length=1) # TODO should be enum of iOS, Android
+    push_token: str = Field(min_length=1)
+
 class Account(CredentialsEnvelope):
+    # TODO why we have fields marked as optional here?
     id: Optional[str] = ACCOUNT_ID_FIELD
     cookie: Optional[str]
+    device: Device
     config: Optional[Config]
 
 class ConfigUpdatePayload(BaseModel):

@@ -6,6 +6,17 @@ from unittest.mock import patch, Mock
 import json
 
 
+login_payload = {
+    'username': 'un', 
+    'password': 'pwd', 
+    'host': 'https://hst',
+    'device': {
+        'device_name': 'foo-device',
+        'platform': 'iOS',
+        'push_token': '1234pt'
+    }
+}
+
 class TestLogin:
     @patch('ccproxy.main.authenticate')
     def test_happy_path(self, mock_authenticate: Mock) -> None:
@@ -13,21 +24,19 @@ class TestLogin:
         account_mock.id = '1234'
         mock_authenticate.return_value = account_mock
 
-        payload = {'username': 'un', 'password': 'pwd', 'host': 'https://hst'}
-
-        result = login_handler({'body': json.dumps(payload)}, {})
+        result = login_handler({'body': json.dumps(login_payload)}, {})
         mock_authenticate.assert_called_once()
         authenticate_call_args = mock_authenticate.call_args[0]
         assert isinstance(authenticate_call_args[0], model.CredentialsEnvelope)
-        assert authenticate_call_args[0].username == payload['username']
-        assert authenticate_call_args[0].password == payload['password']
-        assert authenticate_call_args[0].host == payload['host']
+        assert authenticate_call_args[0].username == login_payload['username']
+        assert authenticate_call_args[0].password == login_payload['password']
+        assert authenticate_call_args[0].host == login_payload['host']
         assert isinstance(authenticate_call_args[1], main.AccountTable)
         assert 'statusCode' in result
         assert result['statusCode'] == 200
         assert result['body'] == '1234'
 
-    def test_generic_exception_thrown(self) -> None:
+    def test_has_exception_handler_decorator(self) -> None:
         assert hasattr(login_handler, 'decorators') is True
         assert handler_utils.exception_handler.__name__ in login_handler.decorators
 
@@ -41,9 +50,7 @@ class TestLogin:
         mock_authenticate.side_effect = network.AuthContractError(
             'Boom', type=error_type)
 
-        payload = {'username': 'un', 'password': 'pwd', 'host': 'https://hst'}
-
-        result = login_handler({'body': json.dumps(payload)}, {})
+        result = login_handler({'body': json.dumps(login_payload)}, {})
 
         assert 'statusCode' in result
         assert result['statusCode'] == 403

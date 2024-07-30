@@ -5,6 +5,7 @@ import uuid
 from typing import Any
 from decouple import config as read_config
 import pytest
+import json
 
 
 # TODO make sure it's working still, this test
@@ -50,12 +51,18 @@ def test_authenticate_new_account_happy_path(mock_network_authenticate: Mock) ->
     dummy_account_table = Mock()
     dummy_account_table.save.return_value = acc_from_db
 
+    # TODO consider externalising dummy account creation in utility method
     payload = model.Account(
         username='foo-un',
         password='foo-pwd',
         host='https://192.168.1.123:8443',
         config=model.Config(
             messages ={'foo_action': ['foo_msg1', 'foo_msg2']}
+        ),
+        device=model.Device(
+            device_name='dn', 
+            platform='iOS', 
+            push_token='pt'
         )
     )
 
@@ -78,25 +85,33 @@ def test_authenticate_new_account_happy_path(mock_network_authenticate: Mock) ->
 
 @patch('ccproxy.network.authenticate')
 def test_authenticate_existing_account(mock_network_authenticate: Mock) -> None:
+    device_def = {
+        'device_name': 'dn', 
+        'platform': 'iOS', 
+        'push_token': 'pt'
+    }
+
     acc_from_db = model.Account(
         id='foo-id',
         username='foo-username',
         password='foo-password',
-        host='https://example.org'
+        host='https://example.org',
+        device=model.Device(**device_def)
     )
 
     dummy_account_table = Mock()
     dummy_account_table.find.return_value = acc_from_db
     dummy_account_table.save.return_value = acc_from_db
 
+    # TODO consider externalising dummy account creation in utility method
     payload = model.Account(
-        id='foo-id',
-        username='foo-username',
-        password='new-pwd',
-        host='https://example.org',
+        username='foo-un',
+        password='foo-pwd',
+        host='https://192.168.1.123:8443',
         config=model.Config(
             messages ={'foo_action': ['foo_msg1', 'foo_msg2']}
-        )
+        ),
+        device=model.Device(**device_def)
     )
 
     cookie = 'Token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJTZXNzaW9uSUQiOiI5YTFkOTM1Ny03NmNhLTQzZGQtYTgzOS0xYjk2ZTNkNzAzZmYifQ.qxtE7q5cZREwmc_qb0718i-VKwUnlZ9-3sDxj7EvG2s'
@@ -112,6 +127,7 @@ def test_authenticate_existing_account(mock_network_authenticate: Mock) -> None:
     assert save_method_account.cookie is cookie
     assert save_method_account.config is payload.config
     assert save_method_account.password is payload.password
+    assert save_method_account.device is payload.device
     assert auth_acc.id == acc_from_db.id # type: ignore[index]
 
 def create_pe_mock() -> Mock:
@@ -129,6 +145,22 @@ def create_pe_mock() -> Mock:
 
 
 class TestAccountTable:
+    def _create_config(self) -> model.Config:
+        acc_config_messages = {'foo_action': ['foo_msg', 'bar_msg']}
+        acc_config_actions = {'foo_action': 'foo_path'}
+
+        return model.Config(
+            messages=acc_config_messages,
+            actions=acc_config_actions
+        )
+    
+    def _create_device(self) -> model.Device:
+        return model.Device(
+            device_name='foo-dn',
+            platform='foo-pl',
+            push_token='foo-pt'
+        )
+
     def test_save(self) -> None:
         tutils.create_accounts_table_if_not_exists()
 
@@ -136,18 +168,16 @@ class TestAccountTable:
         at = main.AccountTable(create_pe_mock(), dynamodb)
         raw_table = dynamodb.Table(config.ACCOUNTS_TABLE)
 
-        acc_config_messages = {"foo_action": ["foo_msg", "bar_msg"]}
-        acc_config_actions = {"foo_action": "foo_path"}
+        account_config = self._create_config()
+        device = self._create_device()
 
         acc = model.Account(
             username='un',
             password='pwd',
             host='https://hst',
             cookie='ck',
-            config=model.Config(
-                messages=acc_config_messages,
-                actions=acc_config_actions
-            )
+            config=account_config,
+            device=device
         )
 
         saved_acc = at.save(acc)  # save
@@ -158,33 +188,41 @@ class TestAccountTable:
         assert saved_acc.host == 'https://hst'
         assert saved_acc.cookie == 'ck'
         assert saved_acc.config is not None
+        assert saved_acc.device is not None
 
         raw_saved_account = raw_table.get_item(Key={'id': saved_acc.id})
         assert 'Item' in raw_saved_account
-        assert 'id' in raw_saved_account['Item']
-        assert raw_saved_account['Item']['id'] == saved_acc.id
-        assert 'username' in raw_saved_account['Item']
-        assert raw_saved_account['Item']['username'] == saved_acc.username
-        assert 'password' in raw_saved_account['Item']
-        assert raw_saved_account['Item']['password'] == 'pwd-encrypted'
-        assert 'host' in raw_saved_account['Item']
-        assert raw_saved_account['Item']['host'] == saved_acc.host
-        assert 'cookie' in raw_saved_account['Item']
-        assert raw_saved_account['Item']['cookie'] == 'ck-encrypted'
-        assert 'config' in raw_saved_account['Item']
-        assert raw_saved_account['Item']['config'] is not None
-        assert 'messages' in raw_saved_account['Item']['config']
-        assert raw_saved_account['Item']['config']['messages'] == acc_config_messages
-        assert 'actions' in raw_saved_account['Item']['config']
-        assert raw_saved_account['Item']['config']['actions'] == acc_config_actions
+        raw_saved_account = raw_saved_account['Item']
+        assert 'id' in raw_saved_account
+        assert raw_saved_account['id'] == saved_acc.id
+        assert 'username' in raw_saved_account
+        assert raw_saved_account['username'] == saved_acc.username
+        assert 'password' in raw_saved_account
+        assert raw_saved_account['password'] == 'pwd-encrypted'
+        assert 'host' in raw_saved_account
+        assert raw_saved_account['host'] == saved_acc.host
+        assert 'cookie' in raw_saved_account
+        assert raw_saved_account['cookie'] == 'ck-encrypted'
+        assert 'config' in raw_saved_account
+        assert raw_saved_account['config'] is not None
+        assert 'messages' in raw_saved_account['config']
+        assert raw_saved_account['config']['messages'] == account_config.messages
+        assert 'actions' in raw_saved_account['config']
+        assert raw_saved_account['config']['actions'] == account_config.actions
+        assert 'device' in raw_saved_account
+        assert 'device_name' in raw_saved_account['device']
+        assert json.loads(device.json()) == raw_saved_account['device']
 
         saved_acc.username = 'foo-un'
         saved_acc.password = 'foo-pwd'
         saved_acc.host = 'foo-hst'
         saved_acc.cookie = 'foo-ck'
         saved_acc.config = model.Config(
-            messages={"bar_action": ["bar_msg1"]}, actions={"bar_action": "bar_action_path"}
+            messages={'bar_action': ['bar_msg1']}, actions={'bar_action': 'bar_action_path'}
         )
+        saved_acc.device.device_name = 'updated-dn'
+        saved_acc.device.platform = 'updated-plt'
+        saved_acc.device.push_token = 'updated-pt'
 
         updated_acc = at.save(saved_acc)  # update
         assert updated_acc is not None
@@ -192,17 +230,28 @@ class TestAccountTable:
         assert updated_acc.password == 'foo-pwd'
         assert updated_acc.host == 'foo-hst'
         assert updated_acc.cookie == 'foo-ck'
+        assert updated_acc.config is not None
         assert updated_acc.config.actions == saved_acc.config.actions
         assert updated_acc.config.messages == saved_acc.config.messages
+        assert updated_acc.device is not None
+        assert updated_acc.device.device_name == 'updated-dn'
+        assert updated_acc.device.platform == 'updated-plt'
+        assert updated_acc.device.push_token == 'updated-pt'
 
         raw_updated_account = raw_table.get_item(Key={'id': updated_acc.id})
         assert 'Item' in raw_updated_account
-        assert raw_updated_account['Item']['username'] == 'foo-un'
-        assert raw_updated_account['Item']['password'] == 'foo-pwd-encrypted'
-        assert raw_updated_account['Item']['host'] == 'foo-hst'
-        assert raw_updated_account['Item']['cookie'] == 'foo-ck-encrypted'
-        assert raw_updated_account['Item']['config']['actions'] == saved_acc.config.actions
-        assert raw_updated_account['Item']['config']['messages'] == saved_acc.config.messages
+        raw_updated_account = raw_updated_account['Item']
+        assert raw_updated_account['username'] == 'foo-un'
+        assert raw_updated_account['password'] == 'foo-pwd-encrypted'
+        assert raw_updated_account['host'] == 'foo-hst'
+        assert raw_updated_account['cookie'] == 'foo-ck-encrypted'
+        assert 'config' in raw_updated_account
+        assert raw_updated_account['config']['actions'] == saved_acc.config.actions
+        assert raw_updated_account['config']['messages'] == saved_acc.config.messages
+        assert 'device' in raw_updated_account
+        assert raw_updated_account['device']['device_name'] == 'updated-dn'
+        assert raw_updated_account['device']['platform'] == 'updated-plt'
+        assert raw_updated_account['device']['push_token'] == 'updated-pt'
 
     def test_find(self) -> None:
         tutils.create_accounts_table_if_not_exists()
@@ -212,32 +261,30 @@ class TestAccountTable:
         at = main.AccountTable(pe, dynamodb)
         raw_table = dynamodb.Table(config.ACCOUNTS_TABLE)
 
-        account = model.Account(
-            username='un',
-            password='pwd',
-            host='https://hst',
-            cookie='ck'
-        )
-
-        raw_config = {
-            "messages": {
-                "foo_action": ["msg1", "msg2"]
+        id = str(uuid.uuid4())[:8]
+        item = {
+            'id': id,
+            'username': 'un',
+            'password': 'pwd',
+            'host': 'https://hst',
+            'cookie': 'ck',
+            'config': {
+                'messages': {
+                    'foo_action': ['msg1', 'msg2']
+                },
+                'actions': {
+                    'foo_action': 'foo_path'
+                }
             },
-            "actions": {
-                "foo_action": "foo_path"
+            'device': {
+                'platform': 'foo-plt',
+                'device_name': 'foo-dn',
+                'push_token': 'foo-pt'
             }
         }
 
-        id = str(uuid.uuid4())[:8]
         raw_table.put_item(
-            Item={
-                'id': id,
-                'username': account.username,
-                'password': account.password,
-                'host': account.host,
-                'cookie': account.cookie,
-                'config': raw_config
-            }
+            Item=item
         )
 
         fetched_account = at.find(id)
@@ -248,8 +295,12 @@ class TestAccountTable:
         assert fetched_account.host == 'https://hst'
         assert fetched_account.cookie == 'ck-decrypted'
         assert fetched_account.config is not None
-        assert fetched_account.config.actions == raw_config['actions']
-        assert fetched_account.config.messages == raw_config['messages']
+        assert fetched_account.config.actions == item['config']['actions']
+        assert fetched_account.config.messages == item['config']['messages']
+        assert fetched_account.device is not None
+        assert fetched_account.device.platform == item['device']['platform']
+        assert fetched_account.device.device_name == item['device']['device_name']
+        assert fetched_account.device.push_token == item['device']['push_token']
 
         non_existing_account = at.find('non existing id')
         assert non_existing_account is None
@@ -267,20 +318,26 @@ class TestAccountTable:
         username = f'foo-un{uuid.uuid4()}'
         host = f'https://foo-hst{uuid.uuid4()}'
 
+        id = str(uuid.uuid4())[:8]
+        item = {
+            'id': id,
+            'username': username,
+            'host': host,
+            'password': 'foo-pwd',
+            'cookie': 'foo-ck',
+            'device': {
+                'platform': 'foo-plt',
+                'device_name': 'foo-dn',
+                'push_token': 'foo-pt'
+            }
+        }
+
         empty_result = at.find_by_host_and_username(host, username)
         assert empty_result is None
 
-        id = str(uuid.uuid4())[:8]
         raw_table.put_item(
-            Item={
-                'id': id,
-                'username': username,
-                'host': host,
-                'password': 'foo-pwd',
-                'cookie': 'foo-ck'
-            }
+            Item=item
         )
-
         account = at.find_by_host_and_username(host, username)
         assert account is not None
         assert account.username == username
@@ -288,6 +345,10 @@ class TestAccountTable:
         assert account.password == 'foo-pwd-decrypted'
         assert account.cookie == 'foo-ck-decrypted'
         assert account.id == id
+        assert account.device is not None
+        assert account.device.platform == item['device']['platform']
+        assert account.device.device_name == item['device']['device_name']
+        assert account.device.push_token == item['device']['push_token']
         assert pe.encrypt.call_count == 0
         assert pe.decrypt.call_count == 2
 

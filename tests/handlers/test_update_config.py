@@ -24,7 +24,12 @@ class TestUpdateConfig():
         account_from_db = model.Account(
             username='foo_username', 
             password='foo_password', 
-            host='http://example.org'
+            host='http://example.org',
+            device=model.Device(
+                platform='foo-plt',
+                push_token='foo-pt',
+                device_name='foo-dn'
+            )
         )
 
         mock_account_table = Mock()
