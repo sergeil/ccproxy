@@ -1,12 +1,14 @@
 import sys
-from typing import Optional
+from typing import Optional, TypeAlias
 from cryptography.fernet import Fernet
 from ccproxy import model
 import json
 from os.path import isfile
 import requests
 
-def create_account_on_server(ccproxy_login_url: str, account: model.Account) -> str:
+AccountId: TypeAlias = str
+
+def create_account_on_server(ccproxy_login_url: str, account: model.Account) -> AccountId:
     payload = json.loads(account.json()) # TODO use Pydantic 2.x's API
 
     headers = {
@@ -26,7 +28,10 @@ def create_account_from_file(
     ccproxy_login_url: str,
     config_file_path: str,
     password: Optional[str],
-) -> str:
+) -> AccountId:
+    if not isfile(config_file_path):
+        raise RuntimeError(f'File "{config_file_path}" doesn\'t exist.')
+
     with open(config_file_path) as f:
         create_account_raw = json.loads(f.read())
 
