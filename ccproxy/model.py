@@ -55,13 +55,8 @@ class Device(BaseModel):
     push_token: str = Field(min_length=1)
 
 class Account(CredentialsEnvelope):
-    # TODO why we have fields marked as optional here?
     id: Optional[str] = ACCOUNT_ID_FIELD
     cookie: Optional[str]
-    device: Device
-    config: Optional[Config]
-
-class AccountCreatePayload(CredentialsEnvelope):
     device: Device
     config: Config
 

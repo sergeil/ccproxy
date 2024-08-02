@@ -278,7 +278,8 @@ class TestAccountTable:
                 'platform': 'foo-plt',
                 'device_name': 'foo-dn',
                 'push_token': 'foo-pt'
-            }
+            },
+            'config': {}
         }
 
         empty_result = at.find_by_host_and_username(host, username)

@@ -27,7 +27,7 @@ class AccountTable:
 
     def save(self, account: model.Account) -> model.Account:
         if account.cookie is None:
-            raise RuntimeError(f"model.cookie cannot be None (but for Account with username '{account.username}' it is)")
+            raise RuntimeError(f"account.cookie cannot be None (but for Account with username '{account.username}' it is)")
 
         encrypted_password = self._encrypter.encrypt(account.password)
         encrypted_cookie = self._encrypter.encrypt(account.cookie)
@@ -115,24 +115,17 @@ def _validate_account_changeset(transient_account: model.Account, db_account: mo
     if is_host_changed or is_username_changed:
         raise RuntimeError('It is not allowed to change "username", "host" values for existing accounts.')
 
-def authenticate(transient_account: model.Account, tbl: AccountTable) -> model.Account:
-    cookie = network.authenticate(transient_account)
+def authenticate(input_account: model.Account, tbl: AccountTable) -> model.Account:
+    cookie = network.authenticate(input_account)
 
-    if transient_account.id is None:
-        account = model.Account(
-            username=transient_account.username,
-            password=transient_account.password,
-            host=transient_account.host,
-            device=transient_account.device
-        )
-    else:
-        account = tbl.find(transient_account.id)
+    # TODO can be simplified
+    account = input_account if input_account.id is None else tbl.find(input_account.id)
 
-    _validate_account_changeset(transient_account, account)
+    _validate_account_changeset(input_account, account)
 
     account.cookie = cookie
-    account.config = transient_account.config
-    account.device = transient_account.device
-    account.password = transient_account.password
+    account.config = input_account.config
+    account.device = input_account.device
+    account.password = input_account.password
 
     return tbl.save(account)

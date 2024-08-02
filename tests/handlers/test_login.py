@@ -14,6 +14,8 @@ login_payload = {
         'device_name': 'foo-device',
         'platform': 'iOS',
         'push_token': '1234pt'
+    },
+    'config': {
     }
 }
 

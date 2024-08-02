@@ -10,7 +10,7 @@ _ACCOUNT_HEADER_NAME = 'x-ccproxy-account'
 
 
 @handler_utils.exception_handler(logger)
-def process_action_handler(event: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+def process_action_handler(event: dict[str, Any], ctx: dict[str, Any]) -> dict[str, Any]:
     if 'lambda_tender' in event:
         return {
             'statusCode': 418,
