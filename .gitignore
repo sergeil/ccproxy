@@ -11,5 +11,6 @@ config.json
 .env
 .env.prod
 .env.dev
+.accounts/
 protocol
 TODO
