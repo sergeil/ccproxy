@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any
 import requests
 from requests import Response
-from ccproxy import model, config
+from ccproxy import model
 
 
 class AuthContractError(RuntimeError):

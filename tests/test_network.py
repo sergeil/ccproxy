@@ -40,7 +40,7 @@ def test_authenticate_invalid_response(
         password='foo-pwd',
         host='https://192.168.1.123:8443',
         config=model.Config(),
-        device=tutils.create_account_device()
+        device=tutils.create_account_device_object()
     )
 
     dummy_response = Mock()
@@ -75,7 +75,7 @@ def test_authenticate_happy_path(validate_auth_response: Mock, mock_request: Moc
         password='pwd',
         host='https://example.com',
         config=model.Config(),
-        device=tutils.create_account_device()
+        device=tutils.create_account_device_object()
     )
 
     authenticated_account = network.authenticate(account)

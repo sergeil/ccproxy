@@ -7,9 +7,9 @@ from ccproxy import config
 ACCOUNT_ID_FIELD = Field(min_length=1, max_length=config.ACCOUNT_ID_LENGTH)
 
 class CredentialsEnvelope(BaseModel):
+    host: AnyHttpUrl
     username: str = Field(min_length=1)
     password: str = Field(min_length=1)
-    host: AnyHttpUrl
 
 class Config(BaseModel):
     messages: dict[str, list[str]] = {}
@@ -61,6 +61,11 @@ class Account(CredentialsEnvelope):
     device: Device
     config: Optional[Config]
 
-class ConfigUpdatePayload(BaseModel):
+class AccountCreatePayload(CredentialsEnvelope):
+    device: Device
+    config: Config
+
+class AccountUpdatePayload(BaseModel):
     id: str = ACCOUNT_ID_FIELD
     config: Config
+    device: Device

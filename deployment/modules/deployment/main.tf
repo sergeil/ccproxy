@@ -109,9 +109,9 @@ resource "aws_lambda_function_url" "login" {
 
 ### 
 
-resource "aws_lambda_function" "update_config" {
-  function_name = "${var.aws_resource_prefix}update_config"
-  handler       = "ccproxy.handlers.update_config"
+resource "aws_lambda_function" "update_account" {
+  function_name = "${var.aws_resource_prefix}update_account"
+  handler       = "ccproxy.handlers.update_account"
   role          = aws_iam_role.lambda.arn
   runtime       = var.lambda_runtime
   memory_size   = 256
@@ -119,7 +119,7 @@ resource "aws_lambda_function" "update_config" {
 
   filename         = var.package_zip_path
   source_code_hash = filebase64sha256(var.package_zip_path)
-  description      = "Config update endpoint"
+  description      = "Account update endpoint"
 
   layers = [aws_lambda_layer_version.this.arn]
 
@@ -130,8 +130,8 @@ resource "aws_lambda_function" "update_config" {
   }
 }
 
-resource "aws_lambda_function_url" "update_config" {
-  function_name      = aws_lambda_function.update_config.function_name
+resource "aws_lambda_function_url" "update_account" {
+  function_name      = aws_lambda_function.update_account.function_name
   authorization_type = "NONE"
 }
 

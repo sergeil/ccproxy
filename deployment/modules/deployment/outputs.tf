@@ -6,6 +6,10 @@ output "process_action_url" {
   value = aws_lambda_function_url.process_action.function_url
 }
 
+output "update_account_url" {
+  value = aws_lambda_function_url.update_account.function_url
+}
+
 output "process_action_lambda_arn" {
   value = aws_lambda_function.process_action.arn
 }

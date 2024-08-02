@@ -1,34 +1,11 @@
 from unittest.mock import Mock, patch
-from ccproxy import api, model
-from typing import Any
+from ccproxy import api, tutils
 
 
 class TestRemoteDeviceController:
-    def _create_account(self, config: dict[str, Any]) -> model.Account:
-        return model.Account(
-            username='foo-username',
-            password='foo-password',
-            host='https://example.org',
-            config=model.Config(**config),
-            device=model.Device(
-                device_name='foo-dn',
-                platform='foo-platform',
-                push_token='foo-pt'
-            )
-        )
-
     @patch('ccproxy.network.do_authenticated_request')
     def test_toggle(self, do_authenticated_request_mock: Mock) -> None:
-        config: dict[str, Any] = {
-            'messages': {
-                'bla_action': ['foo', 'bar']
-            },
-            'actions': {
-                'bla_action': 'bla_action_path'
-            }
-        }
-
-        account = self._create_account(config)
+        account = tutils.create_account_object()
 
         response_mock = Mock()
 
@@ -49,7 +26,7 @@ class TestRemoteDeviceController:
             }
         )
         response_mock.raise_for_status.assert_called_once()
-        assert message in config['messages']['bla_action']
+        assert message in account.config.messages['bla_action']
 
     def test_get_supported_actions(self) -> None:
         config = {
@@ -62,7 +39,7 @@ class TestRemoteDeviceController:
                 'bar_action': 'bar_action_path'
             }
         }
-        dc = api.RemoteDeviceController(self._create_account(config))
+        dc = api.RemoteDeviceController(tutils.create_account_object(config_override=config))
 
         actions = dc.get_supported_actions()
         assert actions == ('bla_action', 'bar_action',)

@@ -1,4 +1,5 @@
 from ccproxy import config, container, model
+from typing import Any
 
 
 def create_accounts_table_if_not_exists() -> bool:
@@ -46,9 +47,39 @@ def create_accounts_table_if_not_exists() -> bool:
 
     return False
 
-def create_account_device() -> model.Device:
-    return model.Device(
-        device_name='foo-dn',
-        platform='foo-plt',
-        push_token='foo-pt'
-    )
+def create_account_object(
+    override: dict[str, Any] = {},
+    config_override: dict[str, Any] = {},
+    device_override: dict[str, Any] = {}
+) -> model.Account:
+    merged_obj: dict[str, Any] = {
+        'username': 'foo-username',
+        'password': 'foo-password',
+        'host': 'https://example.org',
+        'cookie': 'foo-cookie',
+        'config': create_account_config_object(config_override),
+        'device': create_account_device_object(device_override)
+    } | override
+
+    return model.Account(**merged_obj)
+
+def create_account_config_object(override: dict[str, Any] = {}) -> model.Config:
+    merged_obj: dict[str, Any] = {
+        'messages': {
+            'bla_action': ['foo', 'bar']
+        },
+        'actions': {
+            'bla_action': 'bla_action_path'
+        }
+    } | override
+
+    return model.Config(**merged_obj)
+
+def create_account_device_object(override: dict[str, Any] = {}) -> model.Device:
+    merged_obj = {
+        'device_name': 'foo-dn',
+        'platform': 'foo-plt',
+        'push_token': 'foo-pt'
+    } | override
+
+    return model.Device(**merged_obj)

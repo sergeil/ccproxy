@@ -12,11 +12,9 @@ cd ${script_path}/..
 deployment_dir=$(pwd)
 
 echo "# Use credentials that you use to login to ComfortClick app:"
-read -p "Host: " host
-read -p "Username: " username
+read -p "Config file: " config_file_path
 read -sp "Password: " password
 echo
-read -p "Config file: " config_file_path
 
 login_url=$(terraform output -raw login_url)
 
@@ -25,7 +23,7 @@ cd $project_root_dir
 
 export PYTHONPATH="$PYTHONPATH:$(pwd)"
 set +e
-result=$(python ccproxy/cli.py create-account ${login_url} ${host} ${username} ${password} ${config_file_path})
+result=$(python ccproxy/cli.py create-account ${login_url} ${config_file_path} ${password})
 
 if [ "$?" == 0 ]; then
     echo "# Goodstuff, a new account has been created on ccproxy: ${result}"

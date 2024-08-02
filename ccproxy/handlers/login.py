@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 def login_handler(event: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
     account_table = container.create_account_table()
 
+    # TODO consider using AccountCreatePayload
     credentials = model.Account.parse_obj(handler_utils.extract_body(event))
     try:
         authenticated_account = main.authenticate(credentials, account_table)

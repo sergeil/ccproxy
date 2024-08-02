@@ -168,6 +168,6 @@ class TestProcessAction:
             authenticate_mock.assert_called_once_with(account, account_table)
             assert result == 'toggle-result'
 
-    def test_generic_exception_thrown(self) -> None:
+    def test_has_exceptoin_handler_decorator(self) -> None:
         assert hasattr(process_action_handler, 'decorators') is True
         assert handler_utils.exception_handler.__name__ in process_action_handler.decorators

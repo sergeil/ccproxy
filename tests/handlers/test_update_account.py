@@ -1,6 +1,6 @@
-from ccproxy.handlers.update_config import update_config
+from ccproxy.handlers.update_account import update_account
 from unittest.mock import patch, Mock
-from ccproxy import model
+from ccproxy import tutils
 import json
 from ccproxy.handlers import utils as handler_utils
 import pytest
@@ -14,23 +14,19 @@ request_payload = {
         'actions': {
             'foo': 'foo_path'
         }
+    },
+    'device': {
+        'device_name': 'updated-dn',
+        'push_token': 'updated-pt',
+        'platform': 'updated-plt'
     }
 }
 event = {'body': json.dumps(request_payload)}
 
-class TestUpdateConfig():
+class TestUpdateAccount():
     @patch('ccproxy.container.create_account_table')
     def test_happy_path(self, mock_create_account_table: Mock) -> None:
-        account_from_db = model.Account(
-            username='foo_username', 
-            password='foo_password', 
-            host='http://example.org',
-            device=model.Device(
-                platform='foo-plt',
-                push_token='foo-pt',
-                device_name='foo-dn'
-            )
-        )
+        account_from_db = tutils.create_account_object(override={'id': request_payload['id']})
 
         mock_account_table = Mock()
         mock_account_table.find.return_value = account_from_db
@@ -38,13 +34,13 @@ class TestUpdateConfig():
 
         mock_create_account_table.return_value = mock_account_table
 
-        result = update_config.__wrapped__(event, {})
+        result = update_account.__wrapped__(event, {})
 
         assert isinstance(result, dict)
         assert 'statusCode' in result
         assert result['statusCode'] == 200
         assert 'body' in result
-        assert result['body'] == request_payload['config']
+        assert result['body'] == request_payload
 
         assert len(mock_account_table.find.call_args_list) == 1
         assert mock_account_table.find.call_args_list[0][0][0] == request_payload['id']
@@ -60,8 +56,8 @@ class TestUpdateConfig():
         mock_create_account_table.return_value = mock_account_table
 
         with pytest.raises(handler_utils.LambdaHttpError, match=f'Unable to find account with id #{request_payload["id"]}'):
-            update_config.__wrapped__(event, {})
+            update_account.__wrapped__(event, {})
 
-    def test_generic_exception_thrown(self) -> None:
-        assert hasattr(update_config, 'decorators') is True
-        assert handler_utils.exception_handler.__name__ in update_config.decorators
+    def test_has_exception_handler_decorator(self) -> None:
+        assert hasattr(update_account, 'decorators') is True
+        assert handler_utils.exception_handler.__name__ in update_account.decorators
