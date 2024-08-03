@@ -33,9 +33,8 @@ def create_account_from_file(
         raise RuntimeError(f'File "{config_file_path}" doesn\'t exist.')
 
     with open(config_file_path) as f:
-        create_account_raw = json.loads(f.read())
+        account_dict = json.loads(f.read())
 
-    account_dict = create_account_raw 
     if password is not None:
         account_dict = account_dict | { 'password': password }
 
