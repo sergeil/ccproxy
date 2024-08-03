@@ -37,9 +37,5 @@ destroy-infra:
 generate-db-key:
 	@python ccproxy/cli.py generate-db-key
 
-validate-account-config: # e.g. make validate-account-config file=config.json
-	@cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-	@PYTHONPATH="$PYTHONPATH:${pwd}" python ccproxy/cli.py validate-config $(file)
-
 create-account:
 	@./deployment/bin/create-account.sh

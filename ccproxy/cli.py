@@ -1,6 +1,7 @@
 import sys
 from typing import Optional, TypeAlias
 from cryptography.fernet import Fernet
+import pydantic
 from ccproxy import model
 import json
 from os.path import isfile
@@ -8,15 +9,17 @@ import requests
 
 AccountId: TypeAlias = str
 
-def create_account_on_server(ccproxy_login_url: str, account: model.Account) -> AccountId:
-    payload = json.loads(account.json()) # TODO use Pydantic 2.x's API
-
+def _do_post_request_with_json(url: str, payload: dict) -> requests.Response:
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
     }
 
-    response = requests.request(
-        'POST', ccproxy_login_url, json=payload, headers=headers
+    return requests.request('POST', url, json=payload, headers=headers)
+
+def create_account_on_server(ccproxy_login_url: str, account: pydantic.BaseModel) -> AccountId:
+    response = _do_post_request_with_json(
+        ccproxy_login_url,
+        json.loads(account.json()) # TODO use Pydantic 2.x's API
     )
 
     if response.status_code != 200:
@@ -24,7 +27,13 @@ def create_account_on_server(ccproxy_login_url: str, account: model.Account) -> 
 
     return response.text # should contain 'id' of a created account
 
-def create_account_from_file(
+def update_account_on_server_from_file(
+    ccproxy_update_account_url: str,
+    payload: model.AccountUpdatePayload
+) -> str:
+    pass
+
+def create_account_on_server_from_file(
     ccproxy_login_url: str,
     config_file_path: str,
     password: Optional[str],
@@ -57,7 +66,17 @@ if __name__ == '__main__':
                     print('Required parameters were not provided. Valid usage example: python ccproxy/cli.py create-account https://ccproxy-login.example.com account.json password1234')
                     exit(1)
 
-                id = create_account_from_file(
+                id = create_account_on_server_from_file(
+                    sys.argv[2], sys.argv[3], sys.argv[4]
+                )
+                print(id)
+
+            case 'update-account':
+                if (len(sys.argv) != 5):
+                    print('Required parameters were not provided. Valid usage example: python ccproxy/cli.py update-account https://update-account.example.com account-id account.json')
+                    exit(1)
+
+                id = update_account_on_server_from_file(
                     sys.argv[2], sys.argv[3], sys.argv[4]
                 )
                 print(id)

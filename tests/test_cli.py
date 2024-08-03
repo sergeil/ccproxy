@@ -53,7 +53,7 @@ class TestCreateAccountOnServer:
         with pytest.raises(RuntimeError, match='Unable to create account, returned error: kaput'):
             cli.create_account_on_server('foo-ccproxy-login-url', dummy_account)
 
-class TestCreateAccountFromFile:
+class TestCreateAccountOnServerFromFile:
     @pytest.fixture
     def account_dict(self) -> dict[str, Any]:
         return {
@@ -74,7 +74,7 @@ class TestCreateAccountFromFile:
             file.write(account_json.encode('utf-8'))
             file.seek(0)
 
-            cli.create_account_from_file('foo-ccproxy-login-url', file.name, 'foo-password')
+            cli.create_account_on_server_from_file('foo-ccproxy-login-url', file.name, 'foo-password')
 
         mock_create_account_on_server.assert_called_once()
         call_args = mock_create_account_on_server.call_args[0]
@@ -90,7 +90,7 @@ class TestCreateAccountFromFile:
 
     def test_file_not_exists(self) -> None:
         with pytest.raises(RuntimeError, match='File "non-existing-file" doesn\'t exist.'):
-            cli.create_account_from_file(
+            cli.create_account_on_server_from_file(
                 'foo-ccproxy-login-url',
                 'non-existing-file',
                 'foo-password'
@@ -110,7 +110,7 @@ class TestCreateAccountFromFile:
             file.seek(0)
 
             with pytest.raises(ValidationError, match='username'):
-                cli.create_account_from_file(
+                cli.create_account_on_server_from_file(
                     'foo-ccproxy-login-url', file.name, 'foo-password'
                 )
 
