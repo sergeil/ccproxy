@@ -40,7 +40,16 @@ class TestUpdateAccount():
         assert 'statusCode' in result
         assert result['statusCode'] == 200
         assert 'body' in result
-        assert result['body'] == request_payload
+        assert 'password' not in result['body']
+        expected_keys = ['id', 'config', 'device', 'username', 'host']
+        assert len(result['body']) == len(expected_keys)
+        for k in expected_keys:
+            assert k in result['body']
+        assert result['body']['username'] == account_from_db.username
+        assert result['body']['host'] == account_from_db.host
+        assert result['body']['id'] == account_from_db.id
+        assert result['body']['device'] == request_payload['device']
+        assert result['body']['config'] == request_payload['config']
 
         assert len(mock_account_table.find.call_args_list) == 1
         assert mock_account_table.find.call_args_list[0][0][0] == request_payload['id']

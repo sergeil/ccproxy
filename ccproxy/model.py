@@ -64,3 +64,20 @@ class AccountUpdatePayload(BaseModel):
     id: str = ACCOUNT_ID_FIELD
     config: Config
     device: Device
+
+class AccountResponse(BaseModel):
+    id: str = ACCOUNT_ID_FIELD
+    config: Config
+    device: Device
+    host: AnyHttpUrl
+    username: str
+
+    @staticmethod
+    def from_account(acc: Account):
+        return AccountResponse(
+            id=acc.id,
+            config=acc.config,
+            device=acc.device,
+            host=acc.host,
+            username=acc.username
+        )

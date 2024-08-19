@@ -111,7 +111,7 @@ resource "aws_lambda_function_url" "login" {
 
 resource "aws_lambda_function" "update_account" {
   function_name = "${var.aws_resource_prefix}update_account"
-  handler       = "ccproxy.handlers.update_account"
+  handler       = "ccproxy.handlers.update_account.update_account"
   role          = aws_iam_role.lambda.arn
   runtime       = var.lambda_runtime
   memory_size   = 256

@@ -18,3 +18,7 @@ output "login_url" {
 output "process_action_url" {
   value = module.deployment.process_action_url
 }
+
+output "update_account_url" {
+  value = module.deployment.update_account_url
+}

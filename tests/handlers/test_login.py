@@ -1,7 +1,7 @@
 import pytest
 from ccproxy.handlers.login import login_handler
 from ccproxy.handlers import utils as handler_utils
-from ccproxy import model, network, main
+from ccproxy import model, network, main, tutils
 from unittest.mock import patch, Mock
 import json
 
@@ -21,22 +21,26 @@ login_payload = {
 
 class TestLogin:
     @patch('ccproxy.main.authenticate')
-    def test_happy_path(self, mock_authenticate: Mock) -> None:
-        account_mock = Mock(name='account')
-        account_mock.id = '1234'
-        mock_authenticate.return_value = account_mock
+    def test_happy_path(self, mock_authenticate_fn: Mock) -> None:
+        account_to_auth = tutils.create_account_object(login_payload)
+        account_to_auth.id = '1234'
+        mock_authenticate_fn.return_value = account_to_auth
 
-        result = login_handler({'body': json.dumps(login_payload)}, {})
-        mock_authenticate.assert_called_once()
-        authenticate_call_args = mock_authenticate.call_args[0]
+        response = login_handler.__wrapped__({'body': json.dumps(login_payload)}, {})
+        mock_authenticate_fn.assert_called_once()
+        authenticate_call_args = mock_authenticate_fn.call_args[0]
         assert isinstance(authenticate_call_args[0], model.CredentialsEnvelope)
         assert authenticate_call_args[0].username == login_payload['username']
         assert authenticate_call_args[0].password == login_payload['password']
         assert authenticate_call_args[0].host == login_payload['host']
         assert isinstance(authenticate_call_args[1], main.AccountTable)
-        assert 'statusCode' in result
-        assert result['statusCode'] == 200
-        assert result['body'] == '1234'
+        assert 'statusCode' in response
+        assert response['statusCode'] == 200
+        assert 'body' in response
+        assert isinstance(response['body'], dict)
+        for k in ['id', 'config', 'username', 'config', 'device']:
+            assert k in response['body']
+        assert response['body']['id'] == account_to_auth.id
 
     def test_has_exception_handler_decorator(self) -> None:
         assert hasattr(login_handler, 'decorators') is True

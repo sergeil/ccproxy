@@ -39,3 +39,6 @@ generate-db-key:
 
 create-account:
 	@./deployment/bin/create-account.sh
+
+update-account:
+	@./deployment/bin/update-account.sh

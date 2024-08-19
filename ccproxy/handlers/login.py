@@ -1,3 +1,4 @@
+import json
 from ccproxy import container, model, network, main
 from ccproxy.handlers import utils as handler_utils
 import logging
@@ -23,7 +24,7 @@ def login_handler(event: dict[str, Any], ctx: dict[str, Any]) -> dict[str, Any]:
 
     return {
         'statusCode': 200,
-        # TODO consider returning the whole Account (make sure though
-        # that we intentionally select which fields to return, not everything)
-        'body': authenticated_account.id
+        'body': json.loads(
+            model.AccountResponse.from_account(authenticated_account).json()
+        )
     }

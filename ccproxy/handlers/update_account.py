@@ -20,15 +20,9 @@ def update_account(event: dict[str, Any], ctx: dict[str, Any]) -> dict[str, Any]
     account.device = payload.device
     account = account_table.save(account)
 
-    result = model.AccountUpdatePayload(
-        id=account.id,
-        config=account.config,
-        device=account.device
-    )
+    result = model.AccountResponse.from_account(account)
 
     return {
         'statusCode': 200,
-        # TODO return only fields we want, we can use Pydantic 2.x's "model_dump"
-        # & include parameter for this
         'body': json.loads(result.json())
     }
