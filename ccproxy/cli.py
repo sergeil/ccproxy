@@ -26,7 +26,7 @@ def _read_json_file(file_path: str) -> dict[str, Any]:
 def create_account_on_server(
     ccproxy_login_url: str,
     account: model.Account
-) -> AccountId:
+) -> model.AccountResponse:
     response = _do_post_request_with_json(
         ccproxy_login_url,
         json.loads(account.json()) # TODO use Pydantic 2.x's API
@@ -35,12 +35,12 @@ def create_account_on_server(
     if response.status_code != 200:
         raise RuntimeError(f'Unable to create account, returned error: {str(response.text)}')
 
-    return response.text
+    return model.AccountResponse.parse_raw(response.text)
 
 def update_account_on_server(
     ccproxy_update_account_url: str,
     payload: model.AccountUpdatePayload
-) -> ResponseBody:
+) -> model.AccountResponse:
     response = _do_post_request_with_json(
         ccproxy_update_account_url,
         json.loads(payload.json()) # TODO use Pydantic 2.x's API
@@ -49,13 +49,13 @@ def update_account_on_server(
     if response.status_code != 200:
         raise RuntimeError(f'Unable to update account, returned error: {str(response.text)}')
 
-    return response.text
+    return model.AccountResponse.parse_raw(response.text)
 
 def create_account_on_server_from_file(
     ccproxy_login_url: str,
     config_file_path: str,
     password: Optional[str],
-) -> AccountId:
+) -> model.AccountResponse:
     account_dict = _read_json_file(config_file_path)
 
     # even though it's not recommended, password field can be a part of a config file. 
@@ -71,7 +71,7 @@ def update_account_on_server_from_file(
     ccproxy_update_account_url: str,
     account_id: str,
     config_file_path: str,
-) -> model.AccountUpdatePayload: # TODO must return model.AccountUpdatedResponse
+) -> model.AccountResponse:
     payload_dict = _read_json_file(config_file_path) | { 'id': account_id }
 
     return update_account_on_server(
@@ -94,10 +94,10 @@ if __name__ == '__main__':
                     print('Required parameters were not provided. Valid usage example: python ccproxy/cli.py create-account https://ccproxy-login.example.com account.json password1234')
                     exit(1)
 
-                id = create_account_on_server_from_file(
+                response = create_account_on_server_from_file(
                     sys.argv[2], sys.argv[3], sys.argv[4]
                 )
-                print(id)
+                print(response.id)
 
             case 'update-account':
                 if (len(sys.argv) != 5):
@@ -107,7 +107,7 @@ if __name__ == '__main__':
                 response = update_account_on_server_from_file(
                     sys.argv[2], sys.argv[3], sys.argv[4]
                 )
-                print(response)
+                print(response.id)
     except Exception as e:
         print(e)
         exit(1)

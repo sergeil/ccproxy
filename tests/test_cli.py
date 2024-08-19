@@ -3,7 +3,7 @@ from typing import Any
 from unittest.mock import Mock, patch
 import pytest
 from requests import Response
-from ccproxy import cli, model
+from ccproxy import cli, model, tutils
 import tempfile
 
 
@@ -14,7 +14,7 @@ class TestManagingAccountOnRemoteServer:
 
         return model
 
-    def _create_dummy_response(self, status_code: int = 200, response_body='some-id') -> Response:
+    def _create_dummy_response(self, status_code: int = 200, response_body='{}') -> Response:
         response = Mock()
         response.status_code = status_code
         response.text = response_body
@@ -32,11 +32,16 @@ class TestManagingAccountOnRemoteServer:
     def test_happy_path(self, mock_request: Mock, function_name: str, payload_dict: dict[str, Any]):
         payload = self._create_dummy_model(payload_dict)
 
-        mock_request.return_value = self._create_dummy_response()
+        acc = tutils.create_account_object()
+        acc.id = '1234'
+        response_model = model.AccountResponse.from_account(acc)
+        response_body = json.loads(response_model.json())
+        mock_request.return_value = self._create_dummy_response(response_body=json.dumps(response_body))
 
         result = getattr(cli, function_name)('foo-url', payload)
+        assert isinstance(result, model.AccountResponse)
+        assert result.id == '1234'
 
-        assert result == 'some-id'
         mock_request.assert_called_once_with(
             'POST', 
             'foo-url',

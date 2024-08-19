@@ -20,9 +20,9 @@ def update_account(event: dict[str, Any], ctx: dict[str, Any]) -> dict[str, Any]
     account.device = payload.device
     account = account_table.save(account)
 
-    result = model.AccountResponse.from_account(account)
-
     return {
         'statusCode': 200,
-        'body': json.loads(result.json())
+        'body': json.loads(
+            model.AccountResponse.from_account(account).json()
+        )
     }
