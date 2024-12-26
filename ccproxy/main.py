@@ -109,23 +109,14 @@ class AccountTable:
         return self._hydrate(row['Item']) if row is not None and 'Item' in row else None
 
 
-def _validate_account_changeset(transient_account: model.Account, db_account: model.Account) -> None:
-    is_host_changed = db_account.host != transient_account.host
-    is_username_changed = db_account.username != transient_account.username
-    if is_host_changed or is_username_changed:
-        raise RuntimeError('It is not allowed to change "username", "host" values for existing accounts.')
-
 def authenticate(input_account: model.Account, tbl: AccountTable) -> model.Account:
     cookie = network.authenticate(input_account)
 
-    # TODO can be simplified
-    account = input_account if input_account.id is None else tbl.find(input_account.id)
-
-    _validate_account_changeset(input_account, account)
+    account = tbl.find_by_host_and_username(input_account.host, input_account.username)
+    if account is None:
+        account = input_account
 
     account.cookie = cookie
-    account.config = input_account.config
-    account.device = input_account.device
     account.password = input_account.password
 
     return tbl.save(account)

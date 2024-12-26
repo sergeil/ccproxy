@@ -45,11 +45,19 @@ def test_authenticate_real() -> None:
 
 @patch('ccproxy.network.authenticate')
 def test_authenticate_new_account_happy_path(mock_network_authenticate: Mock) -> None:
-    acc_from_db = {
-        'id': 1234
-    }
+    acc_from_db = tutils.create_account_object(
+        override={
+            'password': 'db-password'
+        },
+        config_override={
+            'device_name': 'db-dn',
+            'push_token': 'db-pt',
+            'platform': 'db-plt'
+        }
+    )
 
     dummy_account_table = Mock()
+    dummy_account_table.find_by_host_and_username.return_value = None
     dummy_account_table.save.return_value = acc_from_db
 
     payload = tutils.create_account_object()
@@ -63,13 +71,17 @@ def test_authenticate_new_account_happy_path(mock_network_authenticate: Mock) ->
     assert auth_acc is not None
     assert auth_acc == acc_from_db
 
+    dummy_account_table.find_by_host_and_username.assert_called_once()
+    assert dummy_account_table.find_by_host_and_username.call_args[0][0] == acc_from_db.host
+    assert dummy_account_table.find_by_host_and_username.call_args[0][1] == acc_from_db.username
     dummy_account_table.save.assert_called_once()
 
     save_method_account = dummy_account_table.save.call_args[0][0]
+    # for new accounts we allow to save config, device fields
     assert save_method_account.cookie is cookie
     assert save_method_account.config is payload.config
+    assert save_method_account.device is payload.device
     assert save_method_account.password is payload.password
-    assert auth_acc['id'] == acc_from_db['id'] # type: ignore[index]
 
 @patch('ccproxy.network.authenticate')
 def test_authenticate_existing_account(mock_network_authenticate: Mock) -> None:
@@ -85,7 +97,7 @@ def test_authenticate_existing_account(mock_network_authenticate: Mock) -> None:
     )
 
     dummy_account_table = Mock()
-    dummy_account_table.find.return_value = acc_from_db
+    dummy_account_table.find_by_host_and_username.return_value = acc_from_db
     dummy_account_table.save.return_value = acc_from_db
 
     payload = tutils.create_account_object()
@@ -97,13 +109,18 @@ def test_authenticate_existing_account(mock_network_authenticate: Mock) -> None:
     auth_acc = main.authenticate(payload, dummy_account_table)
     assert auth_acc is acc_from_db
 
+    dummy_account_table.find_by_host_and_username.assert_called_once()
+    assert dummy_account_table.find_by_host_and_username.call_args[0][0] == acc_from_db.host
+    assert dummy_account_table.find_by_host_and_username.call_args[0][1] == acc_from_db.username
     dummy_account_table.save.assert_called_once()
 
     save_method_account = dummy_account_table.save.call_args[0][0]
     assert save_method_account.cookie is cookie
     assert save_method_account.password is payload.password
-    assert save_method_account.config is payload.config
-    assert save_method_account.device is payload.device
+    # for existing accounts we do not allow to update config, device fields
+    # as part of authentication process, makes things more complex to reason about
+    assert save_method_account.config is acc_from_db.config
+    assert save_method_account.device is acc_from_db.device
     assert auth_acc.id == acc_from_db.id
 
 def create_pe_mock() -> Mock:
