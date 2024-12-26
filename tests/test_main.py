@@ -24,7 +24,8 @@ def test_authenticate_real() -> None:
     payload = model.Account(
         username=username,
         password=password,
-        host=host
+        host=host,
+        config=model.Config()
     )
     acc = main.authenticate(payload, account_table_mock)
 
