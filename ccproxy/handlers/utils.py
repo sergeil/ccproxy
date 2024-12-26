@@ -5,7 +5,7 @@ import json
 from pydantic.error_wrappers import ValidationError as PydanticValidationError
 
 class LambdaHttpError(RuntimeError):
-    def __init__(self, message, status_code=503, error_type='generic') -> None:
+    def __init__(self, message: str, status_code: int = 503, error_type: str='generic') -> None:
         self.status_code = status_code
         self.error_type = error_type
         super().__init__(message)
@@ -52,7 +52,7 @@ def create_generic_error_response(error: Exception) -> dict[str,  Any]:
         'body': 'Something went wrong, please check logs'
     }
 
-def create_pydantic_validation_error_response(validation_error: PydanticValidationError):
+def create_pydantic_validation_error_response(validation_error: PydanticValidationError) -> dict[str, Any]:
     validation_errors = {}
     for item in validation_error.errors():
         key = item['loc'][0] # TODO why a tuple?

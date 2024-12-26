@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, AnyHttpUrl, root_validator
-from typing import Optional
+from typing import Any, Optional
 from ccproxy import config
+from typing_extensions import Self
 
 # TODO define max length for all fields (to avoid clients potentially passing some crap there)
 
@@ -16,7 +17,7 @@ class Config(BaseModel):
     actions: dict[str, str] = {}
 
     @root_validator
-    def validate_fields(cls, values) -> None:
+    def validate_fields(cls, values: dict[str, Any]) -> dict[str, Any]:
         messages, actions = values.get('messages'), values.get('actions')
 
         missing_messages = []
@@ -72,8 +73,8 @@ class AccountResponse(BaseModel):
     host: AnyHttpUrl
     username: str
 
-    @staticmethod
-    def from_account(acc: Account):
+    @classmethod
+    def from_account(cls, acc: Account) -> Self:
         return AccountResponse(
             id=acc.id,
             config=acc.config,

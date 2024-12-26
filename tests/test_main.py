@@ -103,7 +103,7 @@ def test_authenticate_existing_account(mock_network_authenticate: Mock) -> None:
     assert save_method_account.password is payload.password
     assert save_method_account.config is payload.config
     assert save_method_account.device is payload.device
-    assert auth_acc.id == acc_from_db.id # type: ignore[index]
+    assert auth_acc.id == acc_from_db.id
 
 def create_pe_mock() -> Mock:
     def encrypt(input: str) -> str:
@@ -139,7 +139,7 @@ class TestAccountTable:
         assert saved_acc.config is acc.config
         assert saved_acc.device is acc.device
 
-        raw_saved_account = raw_table.get_item(Key={'id': saved_acc.id})
+        raw_saved_account: dict[str, Any] = raw_table.get_item(Key={'id': saved_acc.id}) # type: ignore[assignment]
         assert 'Item' in raw_saved_account
         raw_saved_account = raw_saved_account['Item']
         assert 'id' in raw_saved_account
@@ -189,7 +189,7 @@ class TestAccountTable:
         assert updated_acc.device.platform == 'updated-plt'
         assert updated_acc.device.push_token == 'updated-pt'
 
-        raw_updated_account = raw_table.get_item(Key={'id': updated_acc.id})
+        raw_updated_account: dict[str, Any] = raw_table.get_item(Key={'id': updated_acc.id})
         assert 'Item' in raw_updated_account
         raw_updated_account = raw_updated_account['Item']
         assert raw_updated_account['username'] == 'updated-username'
@@ -213,7 +213,7 @@ class TestAccountTable:
         raw_table = dynamodb.Table(config.ACCOUNTS_TABLE)
 
         id = str(uuid.uuid4())[:8]
-        item = {
+        item: dict[str, Any] = {
             'id': id,
             'username': 'un',
             'password': 'pwd',
@@ -268,7 +268,7 @@ class TestAccountTable:
         host = f'https://foo-hst{uuid.uuid4()}'
 
         id = str(uuid.uuid4())[:8]
-        item = {
+        item: dict[str, Any] = {
             'id': id,
             'username': username,
             'host': host,

@@ -8,13 +8,13 @@ import tempfile
 
 
 class TestManagingAccountOnRemoteServer:
-    def _create_dummy_model(self, json_method_return_value: dict) -> model.Account:
+    def _create_dummy_model(self, json_method_return_value: dict[Any, Any]) -> model.Account:
         model = Mock()
         model.json.return_value = json.dumps(json_method_return_value)
 
         return model
 
-    def _create_dummy_response(self, status_code: int = 200, response_body='{}') -> Response:
+    def _create_dummy_response(self, status_code: int = 200, response_body: str='{}') -> Response:
         response = Mock()
         response.status_code = status_code
         response.text = response_body
@@ -29,7 +29,7 @@ class TestManagingAccountOnRemoteServer:
         ]
     )
     @patch('requests.request')
-    def test_happy_path(self, mock_request: Mock, function_name: str, payload_dict: dict[str, Any]):
+    def test_happy_path(self, mock_request: Mock, function_name: str, payload_dict: dict[str, Any]) -> None:
         payload = self._create_dummy_model(payload_dict)
 
         acc = tutils.create_account_object()

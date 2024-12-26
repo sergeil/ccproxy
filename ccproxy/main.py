@@ -109,7 +109,7 @@ class AccountTable:
         return self._hydrate(row['Item']) if row is not None and 'Item' in row else None
 
 
-def _validate_account_changeset(transient_account: model.Account, db_account: model.Account) -> bool:
+def _validate_account_changeset(transient_account: model.Account, db_account: model.Account) -> None:
     is_host_changed = db_account.host != transient_account.host
     is_username_changed = db_account.username != transient_account.username
     if is_host_changed or is_username_changed:

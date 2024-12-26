@@ -36,7 +36,7 @@ def test_create_pydantic_validation_error_response() -> None:
     thrown_error = None
 
     try:
-        FooModel()
+        FooModel() # type: ignore[call-arg]
     except PydanticValidationError as e:
         thrown_error = e
 
@@ -54,7 +54,7 @@ def test_create_pydantic_validation_error_response() -> None:
     }
 
 @patch('ccproxy.handlers.utils.create_generic_error_response')
-def test_decorator_generic(mock_create_generic_error_response) -> None:
+def test_decorator_generic(mock_create_generic_error_response: Mock) -> None:
     mock_logger = Mock()
     _test_decorator(
         Exception('Boom!'), 
@@ -67,16 +67,16 @@ def test_decorator_generic(mock_create_generic_error_response) -> None:
     )
 
 @patch('ccproxy.handlers.utils.create_http_error_response')
-def test_decorator_http_code(mock_create_http_error_response) -> None:
+def test_decorator_http_code(mock_create_http_error_response: Mock) -> None:
     _test_decorator(
         handlers_utils.LambdaHttpError('Boom'), 
         mock_create_http_error_response
     )
 
 @patch('ccproxy.handlers.utils.create_pydantic_validation_error_response')
-def test_decorator_pydantic_validation(mock_create_pydantic_validation_error_response) -> None:
+def test_decorator_pydantic_validation(mock_create_pydantic_validation_error_response: Mock) -> None:
     try:
-        FooModel()
+        FooModel() # type: ignore[call-arg]
     except PydanticValidationError as e:
         _test_decorator(e,  mock_create_pydantic_validation_error_response)
 

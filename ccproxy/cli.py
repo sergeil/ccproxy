@@ -6,8 +6,6 @@ import json
 from os.path import isfile
 import requests
 
-AccountId: TypeAlias = str
-ResponseBody: TypeAlias = str
 
 def _do_post_request_with_json(url: str, payload: dict) -> requests.Response:
     headers = {
@@ -21,7 +19,7 @@ def _read_json_file(file_path: str) -> dict[str, Any]:
         raise RuntimeError(f'File "{file_path}" doesn\'t exist.')
 
     with open(file_path) as file:
-        return json.load(file)
+        return json.load(file) # type: ignore[no-any-return]
 
 def create_account_on_server(
     ccproxy_login_url: str,
