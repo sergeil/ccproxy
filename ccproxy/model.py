@@ -18,7 +18,8 @@ class Config(BaseModel):
 
     @root_validator
     def validate_fields(cls, values: dict[str, Any]) -> dict[str, Any]:
-        messages, actions = values.get('messages'), values.get('actions')
+        actions: dict[str, str] = values.get('actions') # type: ignore[assignment]
+        messages: dict[str, list[str]] = values.get('messages') # type: ignore[assignment]
 
         missing_messages = []
         empty_messages = []
@@ -75,7 +76,7 @@ class AccountResponse(BaseModel):
 
     @classmethod
     def from_account(cls, acc: Account) -> Self:
-        return AccountResponse(
+        return cls(
             id=acc.id,
             config=acc.config,
             device=acc.device,

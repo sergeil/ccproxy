@@ -81,8 +81,8 @@ def test_decorator_pydantic_validation(mock_create_pydantic_validation_error_res
         _test_decorator(e,  mock_create_pydantic_validation_error_response)
 
 
-def _test_decorator(error: Exception, mock_method: Mock, logger=Mock()) -> None:
-    dummy_response = {}
+def _test_decorator(error: Exception, mock_method: Mock, logger:Mock = Mock()) -> None:
+    dummy_response = {} # type: ignore[var-annotated]
 
     mock_method.return_value = dummy_response
 

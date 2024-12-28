@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Optional, TypeAlias
+from typing import Any, Optional
 from cryptography.fernet import Fernet
 from ccproxy import model
 import json
@@ -7,7 +7,7 @@ from os.path import isfile
 import requests
 
 
-def _do_post_request_with_json(url: str, payload: dict) -> requests.Response:
+def _do_post_request_with_json(url: str, payload: dict[str, Any]) -> requests.Response:
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
     }

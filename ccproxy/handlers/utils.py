@@ -53,9 +53,9 @@ def create_generic_error_response(error: Exception) -> dict[str,  Any]:
     }
 
 def create_pydantic_validation_error_response(validation_error: PydanticValidationError) -> dict[str, Any]:
-    validation_errors = {}
+    validation_errors: dict[str, list[dict[str, str]]] = {}
     for item in validation_error.errors():
-        key = item['loc'][0] # TODO why a tuple?
+        key: str = str(item['loc'][0]) # TODO why a tuple?
         if key not in validation_errors:
             validation_errors[key] = []
 

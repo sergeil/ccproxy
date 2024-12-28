@@ -62,7 +62,7 @@ def test_authenticate_invalid_response(
 
 @patch('requests.request')
 @patch('ccproxy.network._validate_auth_reponse')
-def test_authenticate_happy_path(validate_auth_response: Mock, mock_request: Mock):
+def test_authenticate_happy_path(validate_auth_response: Mock, mock_request: Mock) -> None:
     dummy_response = Mock()
     dummy_response.headers = {
         'Set-Cookie': 'abc;def'

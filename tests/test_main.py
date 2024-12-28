@@ -21,12 +21,18 @@ def test_authenticate_real() -> None:
     account_table_mock.find_by_host_and_username.return_value = None
     account_table_mock.save.return_value = saved_account
 
-    payload = model.Account(
-        username=username,
-        password=password,
-        host=host,
-        config=model.Config()
-    )
+    # payload = model.Account(
+    #     username=username,
+    #     password=password,
+    #     host=host,
+    #     config=model.Config(),
+    #     device=model.Device()
+    # )
+    payload = tutils.create_account_object({
+        'username': username,
+        'password': password,
+        'host': host
+    })
     acc = main.authenticate(payload, account_table_mock)
 
     account_table_mock.find_by_host_and_username.assert_called_once_with(
@@ -183,7 +189,7 @@ class TestAccountTable:
 
         saved_acc.username = 'updated-username'
         saved_acc.password = 'updated-password'
-        saved_acc.host = 'updated-host'
+        saved_acc.host = 'updated-host' # type: ignore[assignment]
         saved_acc.cookie = 'updated-cookie'
         saved_acc.config = model.Config(
             messages={'bar_action': ['bar_msg1']},
@@ -207,7 +213,7 @@ class TestAccountTable:
         assert updated_acc.device.platform == 'updated-plt'
         assert updated_acc.device.push_token == 'updated-pt'
 
-        raw_updated_account: dict[str, Any] = raw_table.get_item(Key={'id': updated_acc.id})
+        raw_updated_account: dict[str, Any] = raw_table.get_item(Key={'id': updated_acc.id}) # type: ignore[assignment]
         assert 'Item' in raw_updated_account
         raw_updated_account = raw_updated_account['Item']
         assert raw_updated_account['username'] == 'updated-username'
