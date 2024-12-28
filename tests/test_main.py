@@ -3,17 +3,14 @@ from ccproxy import tutils, config, container, model, main
 from unittest.mock import patch
 import uuid
 from typing import Any
-from decouple import config as read_config
 import pytest
 import json
 
-
-# TODO make sure it's working still, this test
 @pytest.mark.real_cc_server
 def test_authenticate_real() -> None:
-    username = read_config('IT_USERNAME')
-    password = read_config('IT_PASSWORD')
-    host = read_config('IT_HOST')
+    username = config.IT_USERNAME
+    password = config.IT_PASSWORD
+    host = config.IT_HOST
 
     saved_account: Any = {}
 
@@ -21,13 +18,6 @@ def test_authenticate_real() -> None:
     account_table_mock.find_by_host_and_username.return_value = None
     account_table_mock.save.return_value = saved_account
 
-    # payload = model.Account(
-    #     username=username,
-    #     password=password,
-    #     host=host,
-    #     config=model.Config(),
-    #     device=model.Device()
-    # )
     payload = tutils.create_account_object({
         'username': username,
         'password': password,
